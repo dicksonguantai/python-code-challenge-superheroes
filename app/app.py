@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from flask import Flask, make_response
+from flask import Flask, make_response,jsonify, request
 from flask_migrate import Migrate
-
-from models import db, Hero
+from flask_restful import Api, Resource 
+from models import db, Hero, Power, hero_power_association
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/app.db'
@@ -12,11 +12,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 migrate = Migrate(app, db)
 
 db.init_app(app)
+api = Api(app)
+
 
 @app.route('/')
 def home():
-    return ''
+    return 'This is the home page'
 
+class Heroes(Resource):
+    def get(self):
+        heroes = []
+        for hero in Hero.query.all():
+            hero_data = {
+                "id":hero.id,
+                "name": hero.name,
+                "super_name":hero.super_name,
+                "created_at":hero.created_at
+            }
+            heroes.append(hero_data)
+        return make_response(jsonify(heroes),200)
 
+api.add_resource(Heroes, '/heroes')
+
+class HeroesById(Resource)
 if __name__ == '__main__':
     app.run(port=5555)
