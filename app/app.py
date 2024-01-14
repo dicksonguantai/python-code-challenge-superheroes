@@ -34,6 +34,34 @@ class Heroes(Resource):
 
 api.add_resource(Heroes, '/heroes')
 
-class HeroesById(Resource)
+class HeroesById(Resource):
+    def get(self, id):
+        hero = Hero.query.get(id)
+        if hero:
+            hero_data = {
+                "id":hero.id,
+                "name":hero.name,
+                "super_name":hero.super_name,
+                "powers":[
+                    {
+                        "id": power.id,
+                        "name":power.name,
+                        "description":power.description
+                         
+                    }
+                    for power in hero.powers
+                ]
+            }
+            return make_response(jsonify(hero_data),200)
+        else:
+            response_dict = {"error":"Hero not found"}
+            return make_response(jsonify(response_dict),404)
+    
+api.add_resource(HeroesById, '/heroes/<int:id>')
+
+
+
+
+
 if __name__ == '__main__':
     app.run(port=5555)
