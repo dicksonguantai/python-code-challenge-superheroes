@@ -128,10 +128,49 @@ class PowerById(Resource):
             response_dict = {"error":"Power not found"}
             return make_response(jsonify(response_dict),404)
 api.add_resource(PowerById, '/powers/<int:id>')
+class HeroPowers(Resource):
+    def post(self):
+        data = request.get_json()
+        strength = data.get('strength')
+        power_id = data.get('power_id')
+        hero_id = data.get('hero_id')
 
+        if strength not in ["Strong","Weak","Average"]:
+            response_dict = {"errors":["validation errors"]}
+            return make_response(jsonify(response_dict),400)
+        hero = Hero.query.get(hero_id)
+        power = Power.query.get(power_id)
 
+        if not hero or not power:
+            response_dict={"error":"Invalid hero_id or power_id"}
+            return make_response(jsonify(response_dict),404)
+        hero_power_entry = hero_power_association.insert().values(
+            strength = strength,
+            power_id = power_id,
+            hero_id = hero_id
+        )
+        db.session.execute(hero_power_entry)
+        db.session.commit()
+        hero_data = {
+            "id":hero_id,
+            "name":hero.name,
+            "super_name":hero.super_name,
+            "powers":[
+                {
+                    "id":power_id,
+                    "name":power.name,
+                    "description":power.description
+
+                }
+                for power in hero.powers
+            ]
+        }
+        return make_response(jsonify(hero_data),201)
+api.add_resource(HeroPowers, '/hero_powers')
 
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(port=5555)
