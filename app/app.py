@@ -56,10 +56,42 @@ class HeroesById(Resource):
         else:
             response_dict = {"error":"Hero not found"}
             return make_response(jsonify(response_dict),404)
-    
+        
 api.add_resource(HeroesById, '/heroes/<int:id>')
 
+class Powers(Resource):
+    def get(self):
+        powers = []
+        for power in Power.query.all():
+            power_data = {
+                "id":power.id,
+                "name":power.name,
+                "description":power.description,
+                "created_at":power.created_at,
+                "hero_ps":[
+                    {
+                        "id":hero_p.id,
+                        "strength":hero_p.strength,
+                        "hero_id":hero_p.hero_id
+                    }
+                    for hero_p in power.hero_ps
+                ]
+            }
+            powers.append(power_data)
+        return make_response(jsonify(powers),200)
+api.add_resource(Power, '/powers')
 
+class PowerById(Resource):
+    def get(self,id):
+        power = Power.querry.get(id)
+        if power:
+            power_data = {
+                "id":power.id,
+                "name":power.name,
+                "description":power.description
+                "created_at":power.created_at,
+                
+            }
 
 
 
