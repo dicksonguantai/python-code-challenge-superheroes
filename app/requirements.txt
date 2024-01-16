@@ -1,0 +1,7 @@
+Flask
+flask_sqlalchemy
+flask_migrate
+flask_restful
+flask_sqlalchemy
+sqlalchemy-serializer
+Gunicorn
