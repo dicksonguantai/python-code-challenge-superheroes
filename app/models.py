@@ -1,43 +1,37 @@
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
-db = SQLAlchemy()
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+db = SQLAlchemy(app)
 
 
-hero_power_association = db.Table(
-    'hero_power_association',
-    db.Column('id', db.Integer, primary_key=True),
-    db.Column('hero_id',db.Integer, db.ForeignKey('heroes.id'),primary_key = True)
-    db.Column('power_id',db.Integer, db.ForeignKey('powers.id'),primary_key = True)
-    db.Column('strength', db.String),
-    db.Column('created_at',db.DateTime, server_default=db.func.now())
-    db.Column('updated_at',db.DateTime, server_default=db.func.now(),onupdate=db.func.now())
-)
 
+# Hero Table
 class Hero(db.Model):
     __tablename__ = 'heroes'
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     super_name = db.Column(db.String)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, onupdate=db.func())
-    powers = db.relationship(
-        'Power',
-        secondary =hero_power_association,
-        back_populates = 'heroes'
-    )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime)
 
+# Power Table
 class Power(db.Model):
     __tablename__ = 'powers'
-
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String) 
+    name = db.Column(db.String)
     description = db.Column(db.String)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, onupdate=db.func())   
-    heroes = db.relationship(
-        'Hero',
-        secondary = hero_power_association,
-        back_populates='powers'
-    )
 
+# HeroPowers Association Table
+class HeroPowers(db.Model):
+    __tablename__ = 'hero_powers'
+    id = db.Column(db.Integer, primary_key=True)
+    strength = db.Column(db.String)
+
+    hero_id = db.Column(db.Integer, db.ForeignKey('heroes.id'))
+    hero = db.relationship('Hero', backref=db.backref('hero_powers', lazy=True))
+
+    power_id = db.Column(db.Integer, db.ForeignKey('powers.id'))
+    power = db.relationship('Power', backref=db.backref('hero_powers', lazy=True))
