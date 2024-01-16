@@ -3,7 +3,7 @@
 from flask import Flask, make_response, jsonify, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
-from models import db, Hero, Power, HeroPowers  # Update import statement
+from models import db, Hero, Power, HeroPowers 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -14,7 +14,6 @@ migrate = Migrate(app, db)
 db.init_app(app)
 api = Api(app)
 
-# Include HeroPowers in the db.create_all() call
 with app.app_context():
     db.create_all()
 
@@ -24,17 +23,18 @@ def home():
 
 class Heroes(Resource):
     def get(self):
-        heroes = []
-        for hero in Hero.query.all():
-            hero_data = {
-                "id": hero.id,
-                "name": hero.name,
-                "super_name": hero.super_name,
-                "created_at": hero.created_at
+        heroes = Hero.query.all()
+        heroes_dict = [
+            {
+                'id':hero.id,
+                'name': hero.name,
+                'super_name': hero.super_name
             }
-            heroes.append(hero_data)
-        return make_response(jsonify(heroes), 200)
+            for hero in heroes
+        ]
 
+        return jsonify(heroes_dict)
+    
 api.add_resource(Heroes, '/heroes')
 
 class HeroesById(Resource):
@@ -47,130 +47,73 @@ class HeroesById(Resource):
                 "super_name": hero.super_name,
                 "powers": [
                     {
-                        "id": hero_power.id,
-                        "strength": hero_power.strength,
-                        "power": {
                             "id": hero_power.power.id,
-                            "name": hero_power.name,
-                            "description": hero_power.description
+                            "name": hero_power.power.name,
+                            "description": hero_power.power.description
                         }
-                    }
+                
                     for hero_power in hero.powers
                 ]
             }
-            return make_response(jsonify(hero_data), 200)
+            return jsonify(hero_data)
         else:
             response_dict = {"error": "Hero not found"}
-            return make_response(jsonify(response_dict), 404)
+            return jsonify(response_dict),404
 
 api.add_resource(HeroesById, '/heroes/<int:id>')
 
 class PowerResource(Resource):
-    def get(self, id):
-        power = Power.query.filter_by(id=id).first()
-        if power:
-            power_data = {
-                "id": power.id,
-                "name": power.name,
+    def get(self):
+        powers = Power.query.all()
+        power_dict = [
+            {
+                "id":power.id,
+                "name":power.name,
                 "description": power.description,
-                "created_at": power.created_at,
-                "hero_ps": [
-                    {
-                        "strength": hero_power.strength,
-                        "hero_id": hero_power.hero_id
-                    }
-                    for hero_power in power.hero_powers
-                ]
             }
-            return make_response(jsonify(power_data), 200)
-        else:
-            response_dict = {
-                "error": "Power not found"
-            }
-            response = make_response(jsonify(response_dict), 404)
-            return response
-
-    def patch(self, id):
-        power = Power.query.filter_by(id=id).first()
-
-        if power:
-            description = request.form.get('description')
-
-            if not description or len(description) < 20:
-                response_dict = {
-                    "errors": ["validation errors"]
-                }
-                response = make_response(jsonify(response_dict), 400)
-                return response
-
-            for attr in request.form:
-                setattr(power, attr, request.form.get(attr))
-            db.session.add(power)
-            db.session.commit()
-
-            power_data = {
-                "id": power.id,
-                "name": power.name,
-                "description": power.description,
-                "created_at": power.created_at
-            }
-
-            response = make_response(jsonify(power_data), 200)
-            return response
-        else:
-            response_dict = {
-                "error": "Power not found"
-            }
-            response = make_response(jsonify(response_dict), 404)
-            return response
-
+            for power in powers
+        ]
+        return jsonify(power_dict)
+   
 api.add_resource(PowerResource, '/powers')
 
 class PowerById(Resource):
-    def get(self, id):
-        power = Power.query.get(id)
+     def get(self, id):
+        power = Power.query.filter_by(id=id).first()
         if power:
             power_data = {
                 "id": power.id,
                 "name": power.name,
                 "description": power.description,
-                "created_at": power.created_at,
-                "hero_ps": [
-                    {
-                        "id": hero_power.id,
-                        "strength": hero_power.strength,
-                        "hero_id": hero_power.hero_id
-                    }
-                    for hero_power in power.hero_powers
-                ]
             }
-            return make_response(jsonify([power_data]), 200)
+            return jsonify(power_data)
         else:
-            response_dict = {"error": "Power not found"}
-            return make_response(jsonify(response_dict), 404)
+            response_dict = {
+                "error": "Power not found"
+            }
+            response = jsonify(response_dict), 404
+            return response
 
-    def patch(self, id):
-        power = Power.query.get(id)
+     def patch(self, id):
+        power = Power.query.filter_by(id=id).first()
         if power:
             data = request.get_json()
             description = data.get('description')
-
-            if not description or len(description) < 20:
-                response_dict = {"errors": ["validation errors"]}
-                return make_response(jsonify(response_dict), 400)
             power.description = description
             db.session.commit()
 
-            power_data = {
-                "id": power.id,
+            response = {
+                "id":power.id,
                 "name": power.name,
                 "description": power.description,
-                "created_at": power.created_at
             }
-            return make_response(jsonify(power_data), 200)
+            return jsonify(response)
         else:
-            response_dict = {"error": "Power not found"}
-            return make_response(jsonify(response_dict), 404)
+            response_dict = {
+                "error": "Power not found"
+            }
+            response = jsonify(response_dict)
+            return response
 
 api.add_resource(PowerById, '/powers/<int:id>')
 
@@ -203,15 +146,15 @@ class HeroPowers(Resource):
             "super_name": hero.super_name,
             "powers": [
                 {
-                    "id": power_id,
-                    "name": power.name,
-                    "description": power.description
+                    "id": powers.power.id,
+                    "name": powers.power.name,
+                    "description": powers.power.description
 
                 }
-                for power in hero.powers
+                for powers in hero.powers
             ]
         }
-        return make_response(jsonify(hero_data), 201)
+        return jsonify(hero_data)
 
 api.add_resource(HeroPowers, '/hero_powers')
 

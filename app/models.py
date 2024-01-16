@@ -34,13 +34,13 @@ class Power(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    heroes = db.relationship('HeroPower', back_populates = 'power')
+    heroes = db.relationship('HeroPowers', back_populates = 'power')
 
 # HeroPowers Association Table
 class HeroPowers(db.Model):
     __tablename__ = 'hero_powers'
     serialize_rules = ('-hero.powers', '-power.heroes')
-    
+
     id = db.Column(db.Integer, primary_key=True)
     strength = db.Column(db.String)
 
