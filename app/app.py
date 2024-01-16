@@ -50,12 +50,12 @@ class HeroesById(Resource):
                         "id": hero_power.id,
                         "strength": hero_power.strength,
                         "power": {
-                            "id": power.id,
-                            "name": power.name,
-                            "description": power.description
+                            "id": hero_power.power.id,
+                            "name": hero_power.name,
+                            "description": hero_power.description
                         }
                     }
-                    for hero_power in hero.hero_powers
+                    for hero_power in hero.powers
                 ]
             }
             return make_response(jsonify(hero_data), 200)
